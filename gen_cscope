@@ -1,0 +1,11 @@
+#!/bin/bash
+
+find . -name "*.rb"        > cscope.files
+find . -name "*.rake"     >> cscope.files
+find . -name "*.gemspec"  >> cscope.files
+find . -name "Gemfile*"   >> cscope.files
+find . -name "Guardfile*" >> cscope.files
+# find . -name "*."       >> cscope.files
+
+cscope -q -R -b -i cscope.files
+ctags -L cscope.files

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+echo Running rubocop style checking
+cd ~/projects/cobaltStarfish
+docker exec -it cobaltstarfish_batchelor_1 bundle exec rake rubocop_git
+
+exit $?

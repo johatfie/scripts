@@ -1,0 +1,180 @@
+#!/bin/bash
+echo $1
+let i=0
+let failures=0
+
+
+check_exit_code()
+{
+    if [ $? -eq 0 ]
+    then
+        (( i++ ))
+    else
+        failures += 1
+        echo "sed failed at $(( $i - 1 ))"
+    fi
+}
+
+remove_trailing_spaces()
+{
+    # remove trailing spaces
+    sed -E 's/ *$//'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+    check_exit_code $2
+}
+
+cat $1 > /tmp/sed_temp$i
+
+remove_trailing_spaces /tmp/sed_temp$i $LINENO
+
+# add trailing closing parenthesis after assert_equal statement
+sed -E 's/^ *assert_equal [^(].*[^,]$/&)/'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# add opening parenthesis after assert_equal
+sed -E 's/assert_equal ([^(])/assert_equal(\1/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# add trailing closing parenthesis after assert statement
+sed -E 's/^ *assert [^(].*[^,]$/&)/'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# add opening parenthesis after assert
+sed -E 's/assert ([^(])/assert(\1/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# add trailing closing parenthesis after assert_nil statement
+sed -E 's/^ *assert [^(].*[^,]$/&)/'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# add opening parenthesis after assert_nil
+sed -E 's/assert ([^(])/assert(\1/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# sed -E 's/^ *assert [^(].*[^,)]$/&)/'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+# sed -E 's/assert ([^(])/assert(\1/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+# sed -E '!/^ *assert_equal/s/,/,\n/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+
+
+remove_trailing_spaces $i $LINENO
+# # remove trailing whitespace
+# sed -E 's/ *$//'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+# check_exit_code $LINENO
+
+# sed -E 's/,\n\n/,\n/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+
+
+# add space after opening curly brace
+sed -E 's/{/{ /g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# add space before closing curly brace
+sed -E 's/}/ }/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# remove all but the first space after opening curly brace
+sed -E 's/{  */{ /g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# remove all but the last space before closing curly brace
+sed -E 's/ * }/ }/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# remove space between empty curly braces
+# probably added by last two substitutions
+sed -E 's/{ }/{}/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# add a space before a minus sign
+sed -E 's/-/ -/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# add a space a minus sign, unless followed by an equals sign
+sed -E 's/-[^=]/- /g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# remove all but one space before minus signs
+sed -E 's/ * -/ -/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# remove all but one space after minus signs
+sed -E 's/-  /- /g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# add a space before a plus sign
+sed  's/+/ +/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# add a space a plus sign, unless followed by an equals sign
+sed  's/+[^=]/+ /g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# remove all but one space before plus signs
+sed  's/ * +/ +/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# remove all but one space after plus signs
+sed  's/+  */+ /g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# remove all spaces after square brakets
+sed -E 's/\[  */[/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# remove all spaces before square brakets
+sed -E 's/ * ]/]/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# remove all spaces after an opening parenthesis
+sed  's/(  */(/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# remove all spaces before a closing parenthesis
+sed -E 's/ * )/)/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# add a space after map and before an opening curly brace
+sed -E 's/map{/map {/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
+
+
+# sed -E 's///g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+# sed -E 's///g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+
+ruby ~/split_parameters.rb 0 /tmp/sed_temp$i
+
+vim -S ~/tabularize.vim /tmp/sed_temp$i
+check_exit_code $LINENO
+
+
+if [ $failures -eq 0 ]
+then
+    mv /tmp/sed_temp$(( $i - 1 )) $1
+    rm /tmp/sed_temp*
+else
+    echo "Some commands failed to run correctly.  The temporary file with your changes is /tmp/sed_temp$(( $i - 1 ))"
+fi
+
+exit $?
