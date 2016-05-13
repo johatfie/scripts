@@ -26,34 +26,34 @@ cat $1 > /tmp/sed_temp$i
 
 remove_trailing_spaces /tmp/sed_temp$i $LINENO
 
-# add trailing closing parenthesis after assert_equal statement
-sed -E 's/^ *assert_equal [^(].*[^,]$/&)/'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
-check_exit_code $LINENO
+## add trailing closing parenthesis after assert_equal statement
+#sed -E 's/^ *assert_equal [^(].*[^,]$/&)/'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+#check_exit_code $LINENO
 
 
-# add opening parenthesis after assert_equal
-sed -E 's/assert_equal ([^(])/assert_equal(\1/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
-check_exit_code $LINENO
+## add opening parenthesis after assert_equal
+#sed -E 's/assert_equal ([^(])/assert_equal(\1/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+#check_exit_code $LINENO
 
 
-# add trailing closing parenthesis after assert statement
-sed -E 's/^ *assert [^(].*[^,]$/&)/'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
-check_exit_code $LINENO
+## add trailing closing parenthesis after assert statement
+#sed -E 's/^ *assert [^(].*[^,]$/&)/'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+#check_exit_code $LINENO
 
 
-# add opening parenthesis after assert
-sed -E 's/assert ([^(])/assert(\1/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
-check_exit_code $LINENO
+## add opening parenthesis after assert
+#sed -E 's/assert ([^(])/assert(\1/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+#check_exit_code $LINENO
 
 
-# add trailing closing parenthesis after assert_nil statement
-sed -E 's/^ *assert [^(].*[^,]$/&)/'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
-check_exit_code $LINENO
+## add trailing closing parenthesis after assert_nil statement
+#sed -E 's/^ *assert [^(].*[^,]$/&)/'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+#check_exit_code $LINENO
 
 
-# add opening parenthesis after assert_nil
-sed -E 's/assert ([^(])/assert(\1/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
-check_exit_code $LINENO
+## add opening parenthesis after assert_nil
+#sed -E 's/assert ([^(])/assert(\1/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+#check_exit_code $LINENO
 
 
 # sed -E 's/^ *assert [^(].*[^,)]$/&)/'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
