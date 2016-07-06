@@ -69,14 +69,14 @@ remove_trailing_spaces $i $LINENO
 # sed -E 's/,\n\n/,\n/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
 
 
-# add space after opening curly brace
-sed -E 's/{/{ /g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
-check_exit_code $LINENO
-
-
-# add space before closing curly brace
-sed -E 's/}/ }/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
-check_exit_code $LINENO
+# # add space after opening curly brace
+# sed -E 's/{/{ /g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+# check_exit_code $LINENO
+# 
+# 
+# # add space before closing curly brace
+# sed -E 's/}/ }/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+# check_exit_code $LINENO
 
 
 # remove all but the first space after opening curly brace
@@ -100,8 +100,8 @@ sed -E 's/-/ -/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
 check_exit_code $LINENO
 
 
-# add a space a minus sign, unless followed by an equals sign
-sed -E 's/-[^=]/- /g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+# add a space a minus sign
+sed -E 's/-/- /g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
 check_exit_code $LINENO
 
 
@@ -109,6 +109,9 @@ check_exit_code $LINENO
 sed -E 's/ * -/ -/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
 check_exit_code $LINENO
 
+# remove space between - =
+sed -E 's/- =/-=/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
 
 # remove all but one space after minus signs
 sed -E 's/-  /- /g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
@@ -119,20 +122,22 @@ check_exit_code $LINENO
 sed  's/+/ +/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
 check_exit_code $LINENO
 
-
-# add a space a plus sign, unless followed by an equals sign
-sed  's/+[^=]/+ /g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+# add a space a plus sign
+sed  's/+/+ /g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
 check_exit_code $LINENO
-
 
 # remove all but one space before plus signs
 sed  's/ * +/ +/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
 check_exit_code $LINENO
 
+# remove space between + =
+sed -E 's/\+ =/+=/g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
+check_exit_code $LINENO
 
 # remove all but one space after plus signs
 sed  's/+  */+ /g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
 check_exit_code $LINENO
+
 
 
 # remove all spaces after square brakets
@@ -163,9 +168,9 @@ check_exit_code $LINENO
 # sed -E 's///g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
 # sed -E 's///g'  /tmp/sed_temp$i > /tmp/sed_temp$(($i + 1))
 
-ruby ~/split_parameters.rb 0 /tmp/sed_temp$i
+ruby ~/scripts/split_parameters.rb 0 /tmp/sed_temp$i
 
-vim -S ~/tabularize.vim /tmp/sed_temp$i
+vim -S ~/scripts/tabularize.vim /tmp/sed_temp$i
 check_exit_code $LINENO
 
 

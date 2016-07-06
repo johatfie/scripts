@@ -3,7 +3,7 @@ require 'fileutils'
 
 path = "#{ ARGV[ 1 ] }"
 temp_file = Tempfile.new('foo')
-split_size = 40
+split_size = 50
 
 begin
   File.open( path, 'r' ) do |f|
@@ -13,8 +13,15 @@ begin
       when '0'
         # line contains a hash key-value pair
         if line =~ /\([^)]*=>[^)]*\)/
+          subline = line.sub( /^[^(]*\(/, '' )
+          subline = subline.sub( /\)[^)]*$/, '' )
+
+          #puts "subline: #{ subline }"
+          if subline.size > split_size || subline.scan(/=>/).length > 2
+            line = line.gsub( ',', ",\n" )
+          end
           #puts "line: #{ line }"
-          line = line.gsub( ',', ",\n" )
+          #line = line.gsub( ',', ",\n" )
           #puts "line: #{ line }"
         # line contains 3 commas in parenthesis
         elsif line =~ /\([^(,)]*,[^(,)]*,[^)]*\)/
