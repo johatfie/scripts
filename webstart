@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+
+require 'webrick'
+server = WEBrick::HTTPServer.new(:Port => 8000,
+                                 :DocumentRoot => '~/Public')
+
+# stop server with Ctrl-C
+trap('INT') { server.stop }
+server.start

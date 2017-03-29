@@ -1,0 +1,233 @@
+#!/usr/bin/env bash
+
+move_and_copy_files ()
+{
+    \mv /home/jhatfield/Public/all-$1-$2-*.html /home/jhatfield/Public/old/
+    \mv /home/jhatfield/Public/index-$1-$2*.html /home/jhatfield/Public/old/
+    \cp target/test-reports/html/all.html  /home/jhatfield/Public/all-$1-$2-$DATE.html
+    \cp target/test-reports/html/index.html /home/jhatfield/Public/index-$1-$2-$DATE.html
+    \cp -f target/test-reports/html/com/stratice/core/*.html /home/jhatfield/Public/com/stratice/core/
+    \cp -f target/test-reports/html/com/stratice/launch/*.html /home/jhatfield/Public/com/stratice/launch/
+}
+
+set_env_url ()
+{
+    if [ "$1" == "dev" ]; then
+        ENV_URL=https://supplier-dev.edmeplus.net/
+        ENVIRONMENT=dev
+    elif [ "$1" == "localhost" ]; then
+        ENV_URL=http://localhost:8090/
+        ENVIRONMENT=localhost
+    else
+        ENV_URL=https://supplier-uat.edmeplus.net/
+        ENVIRONMENT=uat
+    fi
+}
+
+remove_default_tests ()
+{
+    UNIT=0
+    INTEGRATION=0
+    FUNCTIONAL=0
+}
+
+
+date
+echo
+
+start=$SECONDS
+
+source /home/jhatfield/scripts/test_passes
+export GRAILS_OPTS="-server -Xms2g -Xmx2g -XX:PermSize=256m -XX:MaxPermSize=1024m"
+export GRAILS_HOME=/home/jhatfield/.sdkman/candidates/grails/current
+export JAVA_HOME=/usr/lib/jvm/java-7-oracle
+export PATH=$PATH:/home/jhatfield/.sdkman/candidates/grails/current/bin
+
+
+# env
+
+# ENV_URL=https://supplier-uat.edmeplus.net/
+
+UNIT=1
+INTEGRATION=1
+FUNCTIONAL=1
+
+TESTING=0
+VERBOSE=0
+
+STASH_NEEDED=0
+CHECKOUT_NEEDED=0
+
+set_env_url
+
+
+while [[ $# -gt 0 ]]
+do
+    key="$1"
+
+    case $key in
+        -e|--environment)
+            set_env_url $2
+            shift # past argument
+            ;;
+        -m|--minutes)
+            DATE=$(date +%Y-%m-%d_%R:%S)
+            LOGFILE="log-$DATE"
+            ;;
+        -f|--functional)
+            remove_default_tests
+            FUNCTIONAL=1
+            ;;
+        -u|--unit)
+            remove_default_tests
+            UNIT=1
+            ;;
+        -i|--integration)
+            remove_default_tests
+            INTEGRATION=1
+            ;;
+        --non-functional)
+            remove_default_tests
+            UNIT=1
+            INTEGRATION=1
+            ;;
+        -t|--testing)
+            TESTING=1
+            ;;
+        -v|--verbose)
+            VERBOSE=1
+            ;;
+        *)
+            # unknown option
+            echo unknown option | tee -a $LOGFILE
+            ;;
+    esac
+    shift # past argument or value
+done
+
+
+DATE=$(date +%Y-%m-%d)
+LOGFILE="log-$ENVIRONMENT-$DATE"
+
+
+if [ $VERBOSE -eq "1" ] ; then
+    echo $* | tee -a $LOGFILE
+
+    echo DATE        = "$DATE"        | tee -a $LOGFILE
+    echo LOGFILE     = "$LOGFILE"     | tee -a $LOGFILE
+    echo ENV_URL     = "$ENV_URL"     | tee -a $LOGFILE
+    echo UNIT        = "$UNIT"        | tee -a $LOGFILE
+    echo INTEGRATION = "$INTEGRATION" | tee -a $LOGFILE
+    echo FUNCTIONAL  = "$FUNCTIONAL"  | tee -a $LOGFILE
+    echo TESTING     = "$TESTING"     | tee -a $LOGFILE
+    echo VERBOSE     = "$VERBOSE"     | tee -a $LOGFILE
+fi
+
+if [ $TESTING -eq "1" ] ; then
+    exit 0
+fi
+
+# echo exiting unconditionally
+# exit 0
+
+# OLD_DIRECTORY=$(pwd)
+# pwd
+
+if [ "$(pwd)" != "/repository/railway" ]; then
+    OLD_DIRECTORY=$(pwd)
+    echo cd to /repository/railway | tee -a $LOGFILE
+    cd /repository/railway
+fi
+
+# echo Current folder
+# pwd
+# cd /repository/railway
+# pwd
+
+
+if [ "$ENVIRONMENT" != "localhost" ]; then
+    if [ ! -z "$(git status --untracked-files=no --porcelain)" ]; then
+        echo Stashing changes | tee -a $LOGFILE
+        STASH_NEEDED=1
+        git stash | tee -a $LOGFILE
+
+        if [[ $? != 0 ]]; then
+            echo Git stash failed. Aborting. | tee -a $LOGFILE
+            exit 1
+        fi
+    else
+        echo No uncommited changes found | tee -a $LOGFILE
+    fi
+
+
+    if [ $(git rev-parse --symbolic-full-name --abbrev-ref HEAD) != "dev" ]; then
+        echo Checking out dev branch | tee -a $LOGFILE
+        CHECKOUT_NEEDED=1
+        git checkout dev | tee -a $LOGFILE
+
+        if [[ $? != 0 ]]; then
+            echo Git checkout failed. Aborting. | tee -a $LOGFILE
+            exit 1
+        fi
+    else
+        echo Already on dev branch | tee -a $LOGFILE
+    fi
+
+    git pull | tee -a $LOGFILE
+fi
+
+
+grails clean | tee -a $LOGFILE
+
+
+if [ $UNIT -eq "1" ] ; then
+    echo Running Unit tests... | tee -a $LOGFILE
+    grails dev test-app unit: --echoOut 2>&1 >> $LOGFILE
+
+    echo Copying Unit test results... | tee -a $LOGFILE
+    move_and_copy_files $ENVIRONMENT unit
+    date
+fi
+
+
+if [ $INTEGRATION -eq "1" ] ; then
+    echo Running Integration tests... | tee -a $LOGFILE
+    grails dev test-app integration: --echoOut 2>&1 >> $LOGFILE
+
+    echo Copying Integration test results... | tee -a $LOGFILE
+    move_and_copy_files $ENVIRONMENT integration
+    date
+fi
+
+
+if [ $FUNCTIONAL -eq "1" ] ; then
+    echo Running Functional tests... | tee -a $LOGFILE
+#     grails -DbaseUrl=$ENV_URL  dev test-app functional: LoginSpec --echoOut 2>&1 $LOGFILE
+    grails -DbaseUrl=$ENV_URL  dev test-app functional: --echoOut 2>&1 >> $LOGFILE
+
+    echo Copying Functional test results... | tee -a $LOGFILE
+    move_and_copy_files $ENVIRONMENT functional
+    \cp -f target/test-reports/html/com/stratice/core/supplier/*.html /home/jhatfield/Public/com/stratice/core/supplier/
+    date
+fi
+
+
+if [ $CHECKOUT_NEEDED -eq "1" ]; then
+    echo Checking out previous branch | tee -a $LOGFILE
+    git checkout - | tee -a $LOGFILE
+fi
+
+if [ $STASH_NEEDED -eq "1" ]; then
+    echo unstashing changes | tee -a $LOGFILE
+    git stash pop | tee -a $LOGFILE
+fi
+
+if [ ! -z "$OLD_DIRECTORY" ]; then
+    echo cd back to $OLD_DIRECTORY | tee -a $LOGFILE
+    cd "$OLD_DIRECTORY"
+fi
+
+date
+
+finish=$SECONDS
+echo Elapsed time: $(( (finish - start)/60 )) min $(( (finish - start)%60 )) secs
