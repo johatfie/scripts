@@ -1,0 +1,13 @@
+#!/usr/local/bin/bash
+
+sudo zpool scrub tank
+sudo zpool scrub wintank
+
+result="not done"
+
+while [ -n "$result" ]; do
+    output=$(zpool status)
+    echo "$output"
+    sleep 1
+    result=$(echo "$output" | grep "done")
+done
