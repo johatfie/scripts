@@ -1,3 +1,19 @@
 #!/usr/bin/env bash
 
-grep --color -I -r --exclude 'Gem*' --exclude 'tags' --exclude 'tags.temp' --exclude '*.gemspec' --exclude-dir 'target' --exclude-dir '.git' --exclude 'cscope.*' --exclude "*.log" --exclude "log*" --exclude-dir '.idea' --exclude "*.min.css" --exclude "*.puml" --exclude "swagger.json" --exclude-dir 'archive' "$@" .
+grep --color -I -r --exclude 'Gem*' \
+                   --exclude 'tags' \
+                   --exclude 'tags.temp' \
+                   --exclude '*.gemspec' \
+                   --exclude 'cscope.*' \
+                   --exclude "*.log" \
+                   --exclude "*.log.*" \
+                   --exclude "log*" \
+                   --exclude "*.min.css" \
+                   --exclude "*.puml" \
+                   --exclude "swagger.json" \
+                   --exclude-dir 'target' \
+                   --exclude-dir '.git' \
+                   --exclude-dir '.idea' \
+                   --exclude-dir 'archive' \
+                   -n \
+                   "$@" .
