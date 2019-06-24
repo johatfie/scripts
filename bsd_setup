@@ -1,0 +1,124 @@
+#!/bin/bash
+
+cd
+
+sudo pkg update
+sudo pkg upgrade
+
+sudo pkg install bash-completion
+sudo pkg install git-subversion
+sudo pkg install git-extras
+sudo pkg install py27-pygments
+sudo pkg install htop
+sudo pkg install most
+sudo pkg install vim
+sudo pkg install emacs
+sudo pkg install firefox
+sudo pkg install chromium
+sudo pkg install powerline-fonts
+sudo pkg install tig
+sudo pkg install lsof
+sudo pkg install checkbashisms
+sudo pkg install konsole
+sudo pkg install bootstrap-openjdk11
+sudo pkg install maven
+sudo pkg install gradle
+sudo pkg install eclipse
+sudo pkg install intellij-ultimate
+sudo pkg install tmux
+sudo pkg install angular
+sudo pkg install node
+sudo pkg install npm
+sudo pkg install doas
+sudo pkg install life-preserver
+sudo pkg install virtualbox-ose
+sudo pkg install virtualbox-ose-kmod
+sudo pkg install p7zip
+sudo pkg install git-lfs
+sudo pkg install xclip
+sudo pkg install texlive-full
+sudo pkg install latex2rtf
+sudo pkg install pandoc
+sudo pkg install hs-pandoc
+sudo pkg install libreoffice
+# sudo pkg install xfce
+# sudo pkg install compton
+# sudo pkg install xfce
+# sudo pkg install xfce4-goodies
+sudo pkg install pandoc
+sudo pkg install qbittorrent
+sudo pkg install webfonts
+# sudo pkg install solaar
+sudo pkg install coreutils
+
+
+sudo pw groupmod vboxusers -m jon
+sudo pw groupmod operator -m jon
+
+
+cd
+git clone http://github.com/johatfie/dotfiles .dotfiles
+mkdir .dotfiles_orig
+mv .bash_profile .dotfiles_orig/
+mv .bashrc .dotfiles_orig/
+mv .inputrc .dotfiles_orig/
+mv .profile .dotfiles_orig/
+# cd .dotfiles
+# cat mk_links
+
+ln -s ~/.dotfiles/bash_aliases   ~/.bash_aliases
+ln -s ~/.dotfiles/bash_functions ~/.bash_functions
+ln -s ~/.dotfiles/bash_logout    ~/.bash_logout
+ln -s ~/.dotfiles/bash_profile   ~/.bash_profile
+ln -s ~/.dotfiles/bashrc         ~/.bashrc
+ln -s ~/.dotfiles/crontab        ~/.crontab
+ln -s ~/.dotfiles/curlrc         ~/.curlrc
+ln -s ~/.dotfiles/cvsignore      ~/.cvsignore
+ln -s ~/.dotfiles/gitconfig      ~/.gitconfig
+ln -s ~/.dotfiles/inputrc        ~/.inputrc
+ln -s ~/.dotfiles/mkshrc         ~/.mkshrc
+ln -s ~/.dotfiles/profile        ~/.profile
+
+cd
+source .bashrc
+
+git clone http://github.com/johatfie/vim .vim
+cd .vim/
+git submodule init
+git submodule update
+g submodule foreach git pull origin master
+
+cd
+git clone http://github.com/scripts
+
+cd ~/Documents/
+git clone http://github.com:johatfie/resume.git
+
+# cd
+# easy_install-2.7 pip
+# pip install --upgrade pip
+# pip install Pygments
+# easy_install-2.7 pygments
+
+# cd
+# mkdir .ssh
+# cd .ssh
+# ssh-keygen -t rsa -b 4096 -C "johatfie@gmail.com"
+#
+# eval "$(ssh-agent -s)"
+# ssh-add ~/.ssh/id_rsa
+#
+
+cd .dotfiles/
+git remote set-url origin git@github.com:johatfie/dotfiles.git
+
+cd ~/.vim
+git remote set-url origin git@github.com:johatfie/vim.git
+
+cd ~/scripts/
+git remote set-url origin git@github.com:johatfie/scripts.git
+
+cd resume/
+git remote set-url origin git@github.com:johatfie/resume.git
+
+
