@@ -1,7 +1,10 @@
 #!/bin/bash
 
+find . -name "*.rb"         >> cscope.files
+find . -name "*.java"       >> cscope.files
 find . -name "*.groovy"     >> cscope.files
 find . -name "*.gsp"        >> cscope.files
+find . -name "*.jsp"        >> cscope.files
 find . -name "*.js"         >> cscope.files
 find . -name "*.sh"         >> cscope.files
 find . -name "*.properties" >> cscope.files
