@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+
+completion_list="$HOME/.bash_completion"
+
+echo "#!/usr/bin/env bash" > $completion_list
+echo "" >> $completion_list
+
+for completion in $(ls -d /usr/local/etc/bash_completion.d/*); do
+    echo "source $completion" >> $completion_list
+done
+
+
