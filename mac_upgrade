@@ -1,0 +1,11 @@
+#!/bin/bash
+# Requirements:
+# - homebrew: https://brew.sh/
+# - homebrew tap: buo/cask-upgrade - https://github.com/buo/homebrew-cask-upgrade
+# - homebrew mas (Mac App Store command-line interface - https://github.com/mas-cli/mas)
+
+# Update, upgrade all and cleanup
+brew update && brew upgrade && brew cu --all --yes --cleanup && mas upgrade && brew cleanup
+
+# Dump all taps, apps, casks and mac apps into ~/Brewfile
+brew bundle dump --force --describe --file=~/Brewfile
