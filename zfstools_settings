@@ -1,0 +1,25 @@
+sudo -v
+sudo zfs set com.sun:auto-snapshot=true tank
+
+sudo    zfs   set   com.sun:auto-snapshot=false   tank/tmp
+#sudo   zfs   set   com.sun:auto-snapshot=false   tank/usr/obj
+sudo    zfs   set   com.sun:auto-snapshot=false   tank/usr/src
+sudo    zfs   set   com.sun:auto-snapshot=false   tank/usr/ports
+#sudo   zfs   set   com.sun:auto-snapshot=false   tank/usr/ports/distfiles
+#sudo   zfs   set   com.sun:auto-snapshot=false   tank/usr/ports/packages
+sudo    zfs   set   com.sun:auto-snapshot=false   tank/var/crash
+#sudo   zfs   set   com.sun:auto-snapshot=false   tank/var/empty
+#sudo   zfs   set   com.sun:auto-snapshot=false   tank/var/run
+sudo    zfs   set   com.sun:auto-snapshot=false   tank/var/tmp
+
+
+#PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
+
+*          * * * * /usr/local/sbin/zfs-auto-snapshot 1min    30
+0,15,30,45 * * * * /usr/local/sbin/zfs-auto-snapshot 15min   4
+0          * * * * /usr/local/sbin/zfs-auto-snapshot hourly  24
+7          0 * * * /usr/local/sbin/zfs-auto-snapshot daily   7
+14         0 * * 7 /usr/local/sbin/zfs-auto-snapshot weekly  4
+28         0 1 * * /usr/local/sbin/zfs-auto-snapshot monthly 12
+
+*/20       * * * * /usr/local/bin/zfs-cleanup-snapshots
