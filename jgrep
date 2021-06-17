@@ -12,6 +12,7 @@ grep --color -I -r --exclude 'Gem*' \
                    --exclude "*.min.css" \
                    --exclude "*.puml" \
                    --exclude "swagger.json" \
+                   --exclude "sed_cmds" \
                    --exclude-dir 'target' \
                    --exclude-dir '.git' \
                    --exclude-dir '.idea' \
