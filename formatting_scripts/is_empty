@@ -1,0 +1,6 @@
+~/scripts/formatting_scripts/is_not_null_and_size_greater_then_zero_with_method_call.sh "$@"
+~/scripts/formatting_scripts/is_not_null_and_size_greater_then_zero.sh "$@"
+~/scripts/formatting_scripts/is_null_or_size_equals_zero_with_method_call.sh "$@"
+~/scripts/formatting_scripts/is_null_or_size_equals_zero.sh "$@"
+ ~/scripts/formatting_scripts/is_size_equal_to_zero.sh "$@"
+ ~/scripts/formatting_scripts/is_size_greater_than_zero.sh "$@"
