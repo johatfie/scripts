@@ -1,0 +1,649 @@
+#!/usr/bin/env bash
+
+set -e      # exit on first error
+
+#set +v      # Command echoing off.
+# set -o
+
+# set -v
+
+status=0
+
+
+folders=()
+services=()
+
+open_in_vim=0
+run_tests=0
+verbose=0
+noop=0
+first_run=0
+show_usage=0
+
+if [ "$editor_command" -eq "" ]; then
+    editor_command="mvim"
+else
+    editor_command="$editor_command"
+fi
+
+
+increment_build_version ()
+{
+    if [ $noop -eq 0 ]; then
+        build_index=$new_build_index
+        build_version=$major_version.$build_index.$date_code
+    fi
+}
+
+
+get_last_build_version ()
+{
+    source .build_version
+}
+
+
+set_next_build_version ()
+{
+    new_build_index=$(($build_index + 1))
+    new_build_version=$major_version.$new_build_index.$date_code
+}
+
+
+echo_variables ()
+{
+    echo
+    echo "********************************************************************************"
+    echo "Variables"
+    echo "********************************************************************************"
+    echo "major_version:     $major_version"
+    echo "build_index:       $build_index"
+    echo "date_code:         $date_code"
+    echo "build_version:     $build_version"
+    echo "new_build_index:   $new_build_index"
+    echo "new_build_version: $new_build_version"
+    echo "run_tests:         $run_tests"
+    echo "open_in_vim:       ${open_in_vim[@]}"
+    echo "verbose:           $verbose"
+    echo "noop:              $noop"
+    echo "first_run:         $first_run"
+    echo "fshow_usage:       $show_usage"
+    echo "editor_command:    $editor_command"
+    echo "folders:           ${folders[@]}"
+    echo "services:          ${services[@]}"
+    echo "********************************************************************************"
+    echo
+}
+
+
+
+initialize_build_version ()
+{
+    build_version=$1
+    IFS=. read -r major_version build_index date_code <<< "$1"
+
+    build_version=$major_version.$build_index.$date_code
+    set_next_build_version
+    persist_variables
+}
+
+
+persist_variables ()
+{
+    echo major_version=$major_version         >  .build_version
+    echo build_index=$build_index             >> .build_version
+    echo date_code=$date_code                 >> .build_version
+    echo build_version=$build_version         >> .build_version
+    echo new_build_index=$new_build_index     >> .build_version
+    echo new_build_version=$new_build_version >> .build_version
+}
+
+
+get_folders ()
+{
+    while [ -n "$1" ]; do
+        folders+=("$1")
+        shift
+    done
+}
+
+
+banner ()
+{
+    echo "********************************************************************************"
+    echo "$1"
+    echo "********************************************************************************"
+}
+
+
+open_build_gradle_files_in_vim ()
+{
+#     editor_command="mvim "
+
+    for i in "${folders[@]}"
+    do
+        editor_command+=" $i"
+        editor_command+="build.gradle "
+    done
+
+    for i in "${services[@]}"
+    do
+        editor_command+=" $i"
+        editor_command+="build.gradle "
+    done
+
+    $editor_command
+}
+
+check_build_gradle_file_versions ()
+{
+    set +e  # handle errors manually in this function
+
+    echo
+    banner "Checking build.gradle files for version number $build_version"
+
+    for i in "${folders[@]}"
+    do
+        pushd "$i" 1> /dev/null
+
+        echo "Checking for build version in ${i}build.gradle"
+
+        if [ $verbose -eq 1 ]; then
+            echo "grep $build_version ${i}build.gradle 2>&1"
+        fi
+
+        grep $build_version build.gradle 2>&1 > /dev/null
+
+        if [ $? -ne 0 ]; then
+            echo "Build verson $build_version not found in ${i}build.gradle"
+
+            if [ $noop -eq 0 ]; then
+                exit 1
+            fi
+        fi
+
+        popd 1> /dev/null
+    done
+
+    for i in "${services[@]}"
+    do
+        pushd "$i" 1> /dev/null
+
+        echo "Checking for build version in ${i}build.gradle"
+
+        if [ $verbose -eq 1 ]; then
+            echo "grep $build_version ${i}build.gradle 2>&1"
+        fi
+
+        grep $build_version build.gradle 2>&1 > /dev/null
+
+        if [ $? -ne 0 ]; then
+            echo "Build verson $build_version not found in ${i}build.gradle"
+
+            if [ $noop -eq 0 ]; then
+                exit 1
+            fi
+        fi
+
+
+        popd 1> /dev/null
+    done
+
+    echo
+    set -e
+}
+
+
+update_build_gradle_file_versions ()
+{
+    echo
+    banner "Updating build.gradle version numbers from $build_version to $new_build_version"
+
+    for i in "${folders[@]}"
+    do
+        pushd "$i" 1> /dev/null
+
+        echo "Updating version in ${i}build.gradle"
+
+        if [ $verbose -eq 1 ]; then
+            echo "sed -i '' -e \"s;${build_version};${new_build_version};\" build.gradle"
+        fi
+
+        if [ $noop -eq 0 ]; then
+            sed -i '' -e "s;${build_version};${new_build_version};" build.gradle
+        fi
+
+        popd 1> /dev/null
+    done
+
+    for i in "${services[@]}"
+    do
+        pushd "$i" 1> /dev/null
+
+        echo "Updating version in ${i}build.gradle"
+
+        if [ $verbose -eq 1 ]; then
+            echo "sed -i '' -e \"s;${build_version};${new_build_version};\" build.gradle"
+        fi
+
+        if [ $noop -eq 0 ]; then
+            sed -i '' -e "s;${build_version};${new_build_version};" build.gradle
+        fi
+
+        popd 1> /dev/null
+    done
+
+    echo
+}
+
+
+build_folder ()
+{
+    pushd $i 1> /dev/null
+
+    banner "folder: $PWD"
+
+    echo
+    echo "starting..."
+    echo
+
+
+    banner "./gradlew clean"
+
+    if [ $noop -eq 0 ]; then
+        echo
+        ./gradlew clean
+        echo
+    fi
+
+
+    if [ $run_tests -eq 1 ]; then
+        banner "./gradlew build"
+
+        if [ $noop -eq 0 ]; then
+            echo
+            ./gradlew build
+            echo
+        fi
+
+    fi
+
+
+    banner "./gradlew uploadArchives"
+
+    if [ $noop -eq 0 ]; then
+        echo
+        ./gradlew uploadArchives
+        echo
+    fi
+
+    echo
+    echo "finished..."
+    echo
+
+    status=$?
+    popd 1> /dev/null
+}
+
+
+build_service ()
+{
+    pushd $i 1> /dev/null
+
+    banner "service: $PWD"
+
+    echo
+    echo "starting..."
+    echo
+
+    banner "./gradlew clean"
+
+    if [ $noop -eq 0 ]; then
+        echo
+        ./gradlew clean
+        echo
+    fi
+
+
+    banner "./gradlew compileJava"
+
+    if [ $noop -eq 0 ]; then
+        echo
+        ./gradlew compileJava
+        echo
+    fi
+
+
+    if [ $run_tests -eq 1 ]; then
+        banner "./gradlew build"
+
+        if [ $noop -eq 0 ]; then
+            echo
+            ./gradlew build
+            echo
+        fi
+
+    fi
+
+    echo
+    echo "finished..."
+    echo
+
+    status=$?
+    popd 1> /dev/null
+}
+
+
+usage ()
+{
+    echo " usage: ./build [-b|--build 1.0.20210805-jh] [-t|--test] [-v|--vim] [--verbose] [--noop] [[--verbose] -h|--help]  \\"
+    echo "              [-s|--service path/ [-s|--service path/ [-s|--service path/ ...]]] \\"
+    echo "              [-- path/ [path/ [path/ ...]]]"
+    echo
+    echo
+    echo " -b | --build         This is the starting version number, e.g. 1.0.20210805-jh  All the build.gradle files"
+    echo "                      for repos you wish to build should have this version number to start out.  This option"
+    echo "                      should be used the FIRST time you run this script.  After running the first time, this"
+    echo "                      infomation will be stored in a file named .build_version.  On the second and subsequent"
+    echo "                      runs, the version will be read from this file and incremented automatically.  All the"
+    echo "                      build.gradle files will have every instance of this version updated as well.  Use a"
+    echo "                      version number that is not found in any build.gradle file.  I use the -jh suffix.  So,"
+    echo "                      every instance of 1.0.20210805-jh in the build.gradle files will be updated to"
+    echo "                      1.1.20210805-jh automatically by this script."
+    echo
+    echo " -s | --service       This option is used to add services, or any other repo that does not need to have"
+    echo "                      ./gradlew uploadArchives run on it, to the build list.  Any number, including zero, of"
+    echo "                      these services can be included.  Paths can be relative or absolute."
+    echo
+    echo " -t | --test          This will cause ./gradlew build to be run in the folder, which includes running the tests"
+    echo "                      for the repo.  Some of our tests are broken, which causes the build to fail, which will"
+    echo "                      cause the script to exit.  This step is optional since running ./gradlew uploadArchive"
+    echo "                      is always done for folders, not services, and will compile the code if it was not already"
+    echo "                      done by running the ./gradle build command"
+    echo
+    echo " -v | --vim           This will open the build.gradle files for all the folders and services in MacVim and then"
+    echo "                      exit."
+    echo
+    echo " --verbose            This gives more verbose output, which includes showing all the variables set and showing"
+    echo "                      the sed commands used to update the build.gradle files.  This can be used in combination"
+    echo "                      with the --help command line option."
+    echo
+    echo " --noop               This causes all the sed commands that update the version in the build.gradle files and all"
+    echo "                      the ./gradlew commands to be skipped.  So, it's a no-op.  The script runs, shows the usual"
+    echo "                      output, but doesn't do any actual work."
+    echo
+    echo " -h | --help          This option prints this message.  The one you are reading right now.  --verbose can be used"
+    echo "                      with --help to show a longer example"
+    echo
+    echo " --                   This is used to indicate that there are no more options and everything following the --"
+    echo "                      is a folder, not a service, that needs built.  Therefore, this must be the last option."
+    echo "                      Paths can be relative or absolute.  Folders need to be listed in the correct order with"
+    echo "                      dependent folders listed first."
+    echo
+    echo
+    echo "Usage example:"
+    echo
+    echo "(ins)jonh:~/projects ./build --noop --verbose --build 1.100.20210805-jh --test -s intake-employee-gateway/ --service auth-etl-import/ -- common-model/ components/intake-repository/ components/intake-gateway-interactor/ components/sandata-intake-gateway-status/ components/employee-gateway-interactor/"
+    echo
+
+
+
+        if [ $verbose -eq 0 ]; then
+            banner "add --verbose to see the rest of this example..."
+        else
+cat <<-EOF
+
+noop -- skipping ./gradlew commands
+verbose=1
+-b 1.100.20210805-jh
+-t will run tests
+-s intake-employee-gateway/
+-s auth-etl-import/
+getting folders -- common-model/ components/intake-repository/ components/intake-gateway-interactor/ components/sandata-intake-gateway-status/ components/employee-gateway-interactor/
+
+
+********************************************************************************
+Variables
+********************************************************************************
+major_version:     1
+build_index:       100
+date_code:         20210805-jh
+build_version:     1.100.20210805-jh
+new_build_index:   101
+new_build_version: 1.101.20210805-jh
+run_tests:         1
+open_in_vim:       0
+verbose:           1
+noop:              1
+folders:           common-model/ components/intake-repository/ components/intake-gateway-interactor/ components/sandata-intake-gateway-status/ components/employee-gateway-interactor/
+services:          intake-employee-gateway/ auth-etl-import/
+********************************************************************************
+
+
+********************************************************************************
+update_build_gradle_file_versions
+********************************************************************************
+Updating version in common-model/build.gradle
+sed -i '' -e "s;1.101.20210805-jh;1.102.20210805-jh;" build.gradle
+Updating version in components/intake-repository/build.gradle
+sed -i '' -e "s;1.101.20210805-jh;1.102.20210805-jh;" build.gradle
+Updating version in components/intake-gateway-interactor/build.gradle
+sed -i '' -e "s;1.101.20210805-jh;1.102.20210805-jh;" build.gradle
+Updating version in components/sandata-intake-gateway-status/build.gradle
+sed -i '' -e "s;1.101.20210805-jh;1.102.20210805-jh;" build.gradle
+Updating version in components/employee-gateway-interactor/build.gradle
+sed -i '' -e "s;1.101.20210805-jh;1.102.20210805-jh;" build.gradle
+Updating version in intake-employee-gateway/build.gradle
+sed -i '' -e "s;1.101.20210805-jh;1.102.20210805-jh;" build.gradle
+Updating version in auth-etl-import/build.gradle
+sed -i '' -e "s;1.101.20210805-jh;1.102.20210805-jh;" build.gradle
+
+********************************************************************************
+folder: /Users/jonh/projects/common-model
+********************************************************************************
+
+starting...
+
+********************************************************************************
+./gradlew clean
+********************************************************************************
+********************************************************************************
+./gradlew build
+********************************************************************************
+********************************************************************************
+./gradlew uploadArchives
+********************************************************************************
+
+finished...
+
+********************************************************************************
+folder: /Users/jonh/projects/components/intake-repository
+********************************************************************************
+
+starting...
+
+********************************************************************************
+./gradlew clean
+********************************************************************************
+********************************************************************************
+./gradlew build
+********************************************************************************
+********************************************************************************
+./gradlew uploadArchives
+********************************************************************************
+
+finished...
+
+********************************************************************************
+folder: /Users/jonh/projects/components/intake-gateway-interactor
+********************************************************************************
+
+starting...
+
+********************************************************************************
+./gradlew clean
+********************************************************************************
+********************************************************************************
+./gradlew build
+********************************************************************************
+********************************************************************************
+./gradlew uploadArchives
+********************************************************************************
+
+finished...
+
+********************************************************************************
+folder: /Users/jonh/projects/components/sandata-intake-gateway-status
+********************************************************************************
+
+starting...
+
+********************************************************************************
+./gradlew clean
+********************************************************************************
+********************************************************************************
+./gradlew build
+********************************************************************************
+********************************************************************************
+./gradlew uploadArchives
+********************************************************************************
+
+finished...
+
+********************************************************************************
+folder: /Users/jonh/projects/components/employee-gateway-interactor
+********************************************************************************
+
+starting...
+
+********************************************************************************
+./gradlew clean
+********************************************************************************
+********************************************************************************
+./gradlew build
+********************************************************************************
+********************************************************************************
+./gradlew uploadArchives
+********************************************************************************
+
+finished...
+
+********************************************************************************
+service: /Users/jonh/projects/intake-employee-gateway
+********************************************************************************
+
+starting...
+
+********************************************************************************
+./gradlew clean
+********************************************************************************
+********************************************************************************
+./gradlew compileJava
+********************************************************************************
+********************************************************************************
+./gradlew build
+********************************************************************************
+
+finished...
+
+********************************************************************************
+service: /Users/jonh/projects/auth-etl-import
+********************************************************************************
+
+starting...
+
+********************************************************************************
+./gradlew clean
+********************************************************************************
+********************************************************************************
+./gradlew compileJava
+********************************************************************************
+********************************************************************************
+./gradlew build
+********************************************************************************
+
+finished...
+
+
+EOF
+
+        fi
+}
+
+
+echo
+
+while [ -n "$1" ]; do
+    case "$1" in
+        -b | --build ) echo "--build $2"; initialize_build_version $2; first_run=1; shift ;;
+
+        -s | --service ) echo "--service $2"; services+=("$2"); shift ;;
+
+        -t | --test ) echo "--test will run tests"; run_tests=1 ;;
+
+        -v | --vim )  echo "Open build.gradle files in MacVim"; open_in_vim=1 ;;
+
+        --verbose ) echo "verbose=1"; verbose=1; ;;
+
+        --noop ) echo "noop -- skipping ./gradlew and sed commands"; noop=1; ;;
+
+        -h | --help ) show_usage=1; ;;
+
+        --) echo "getting folders $@"; shift; get_folders "$@"; break ;;
+
+        *) echo "Option $1 not recognized"; usage; exit 1 ;;
+    esac
+
+    shift
+done
+
+echo
+
+if [ $open_in_vim -eq 1 ]; then
+    open_build_gradle_files_in_vim
+    exit 0
+fi
+
+if [ $show_usage -eq 1 ]; then
+        usage
+        exit 0
+fi
+
+if [[ "$build_version" = "" ]]; then
+    get_last_build_version
+fi
+
+if [[ "$build_version" = "" ]]; then
+    echo_variables
+    echo "No build version set"
+    exit 1
+fi
+
+if [ $verbose -eq 1 ]; then
+    echo_variables
+fi
+
+check_build_gradle_file_versions
+
+if [ $first_run -eq 0 ]; then
+    update_build_gradle_file_versions
+    increment_build_version
+    set_next_build_version
+    persist_variables
+fi
+
+for i in "${folders[@]}"
+do
+    #echo $i
+    build_folder $i
+done
+
+
+for i in "${services[@]}"
+do
+    #echo $i
+    build_service $i
+done
+
+
+exit $status
+
