@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+ssh -T git@jon
+
+ssh -T git@nike
+
+ssh -T git@github.com
