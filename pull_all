@@ -1,47 +1,66 @@
 #!/usr/bin/env bash
-set -e
 
-pushd /repository/aperture/
-printf "\n********************************************************************************\n"
-pwd
-printf "********************************************************************************\n"
-git pull
+usage()
+{
+    echo "usage: pull_all [[-c] | [-h]]"
+}
 
-cd /repository/devtools/
-printf "\n********************************************************************************\n"
-pwd
-printf "********************************************************************************\n"
-git pull
+continue_on_error=0
 
-cd /repository/dromos/
-printf "\n********************************************************************************\n"
-pwd
-printf "********************************************************************************\n"
-git pull
+while [ "$1" != "" ]; do
+    case $1 in
+        -c | --continue )       continue_on_error=1
+                                ;;
+        -h | --help )           usage
+                                exit
+                                ;;
+        * )                     usage
+                                exit 1
+    esac
+    shift
+done
 
-cd /repository/railway
-printf "\n********************************************************************************\n"
-pwd
-printf "********************************************************************************\n"
-git pull
 
-cd /repository/supplier
-printf "\n********************************************************************************\n"
-pwd
-printf "********************************************************************************\n"
-git pull
+if [ $continue_on_error -eq 0 ]; then
+    set -e
+fi
 
-cd /repository/test
-printf "\n********************************************************************************\n"
-pwd
-printf "********************************************************************************\n"
-git pull
 
-cd /repository/utilities
-printf "\n********************************************************************************\n"
-pwd
-printf "********************************************************************************\n"
-git pull
+dirs=()
 
-popd
+dirs+=(~/projects/cloudformation/)
+dirs+=(~/projects/rcfadminuiv2/)
+dirs+=(~/projects/rcfdotcomsaleadaptereu/)
+dirs+=(~/projects/rcfinventorytransformerna/)
+dirs+=(~/projects/rcfposaptransformerna/)
+dirs+=(~/projects/rcfpurchaseorderreceiver/)
+dirs+=(~/projects/rcfsalesabrixtransformerna/)
+dirs+=(~/projects/rcfsalesaptransformereu/)
+dirs+=(~/projects/rcfsalesaptransformerna/)
+dirs+=(~/projects/rcfsaletransd2n/)
+dirs+=(~/projects/rcfsalev2/)
+dirs+=(~/projects/rcfsalev2receiverlambda/)
+dirs+=(~/projects/rcfstoresaleadapter/)
+dirs+=(~/projects/rcfstoresaleadapterna/)
+dirs+=(~/projects/rcftestutility/)
 
+
+for d in ${dirs[*]}
+do
+    pushd $d 1>/dev/null
+    printf "\n********************************************************************************\n"
+    pwd
+    printf "********************************************************************************\n"
+
+    branch=$(git rev-parse --abbrev-ref HEAD)
+
+    if [ $branch != "develop" ] && [ $branch != "master" ] && [ $branch != "main" ]; then
+        printf "\n     ********************************************************************************\n"
+        echo "     Current Branch: $branch"
+        printf "     ********************************************************************************\n"
+    fi
+
+    git pull
+
+    popd 1>/dev/null
+done
