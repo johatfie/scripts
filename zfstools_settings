@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 sudo -v
 sudo zfs set com.sun:auto-snapshot=true tank
 
