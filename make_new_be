@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root"
+  exit 1
+fi
+
+pushd /usr/src >/dev/null
+
+commit_time=$(git show --format='%ct' 2>/dev/null | head -1)
+commit_ts=$(date -r ${commit_time} '+%Y%m%d.%H%M%S')
+commit_ver=$(freebsd-version -k 2>/dev/null)
+
+
+BENAME="${commit_ver}-${commit_ts}"
+
+echo $BENAME
+
+popd >/dev/null
+
+bectl create ${BENAME} #>/dev/null
+
+if [ $? -ne 0 ]; then
+    echo "Unable to create BE ${BENAME}"
+    exit 1
+fi
+
+bectl activate ${BENAME} #>/dev/null
+
+if [ $? -ne 0 ]; then
+    echo "Unable to activate BE ${BENAME}"
+    exit 1
+fi
+

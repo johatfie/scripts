@@ -1,0 +1,4 @@
+#!/bin/sh
+
+killall kwin_x11
+kwin_x11 --replace &

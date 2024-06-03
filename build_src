@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run as root"
+    exit 1
+fi
+
+kldload filemon 2>/dev/null
+
+pushd /usr/src
+
+time make -j6 buildworld >& buildworld.log && time make -j6 buildkernel >& buildkernel.log && tail buildworld.log && tail buildkernel.log
+
+kldunload filemon 2>/dev/null
+
+popd
